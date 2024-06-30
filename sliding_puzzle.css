@@ -43,12 +43,12 @@ body {
   cursor: grab;
 }
 
-.sliding-puzzle--solved .sliding-puzzle__piece {
-  cursor: default;
-}
-
 .grabbing .sliding-puzzle__piece {
   cursor: grabbing;
+}
+
+.sliding-puzzle--solved .sliding-puzzle__piece {
+  cursor: default;
 }
 
 .grabbing .sliding-puzzle--solved {
