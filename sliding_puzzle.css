@@ -18,10 +18,10 @@ body {
   flex-wrap: wrap;
   border: 1px solid black;
   position: relative;
+  background-position: right 0px top 0px;
 }
 
 .sliding-puzzle--solved {
-  background-image: url('images/1.jpg');
 }
 
 .sliding-puzzle__piece {
@@ -31,7 +31,6 @@ body {
   align-items: center;
   justify-content: center;
   border: 1px solid black;
-  background-image: url('images/1.jpg');
   background-repeat: no-repeat;
   position: absolute;
   transition-property: transform;
@@ -61,5 +60,9 @@ body {
 
 .sliding-puzzle--solved .sliding-puzzle__piece {
   border: none;
-  background-image: none;
+  background-image: none !important;
+}
+
+.next-button {
+  position: absolute;
 }

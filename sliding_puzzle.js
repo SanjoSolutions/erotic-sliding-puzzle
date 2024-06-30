@@ -178,6 +178,7 @@ async function renderSlidingPuzzle(slidingPuzzle, withNumbers = false) {
         $slidingPuzzlePiece.style.height = slidingPuzzlePieceHeight + 'px'
         $slidingPuzzlePiece.style.left = `${column * slidingPuzzlePieceWidth}px`
         $slidingPuzzlePiece.style.top = `${row * slidingPuzzlePieceHeight}px`
+        $slidingPuzzlePiece.style.backgroundImage = "url('images/1.jpg')"
         $slidingPuzzlePiece.style.backgroundSize = `${scaledWidth}px ${scaledHeight}px`
         $slidingPuzzlePiece.style.backgroundPosition = `right ${
           (width - column - 1) * -slidingPuzzlePieceWidth
@@ -188,6 +189,44 @@ async function renderSlidingPuzzle(slidingPuzzle, withNumbers = false) {
   }
 
   return $slidingPuzzle
+}
+
+async function changeImage(slidingPuzzle, $slidingPuzzle, imagePath) {
+  const image = await loadImage(imagePath)
+  let scaledWidth
+  let scaledHeight
+  if (image.naturalWidth < image.naturalHeight) {
+    scaledWidth = slidingPuzzleWidth
+    scaledHeight = Math.round(
+      (scaledWidth / image.naturalWidth) * image.naturalHeight
+    )
+  } else {
+    scaledHeight = slidingPuzzleHeight
+    scaledWidth = Math.round(
+      (scaledHeight / image.naturalHeight) * image.naturalWidth
+    )
+  }
+
+  $slidingPuzzle.style.backgroundSize = `${scaledWidth}px ${scaledHeight}px`
+
+  const slidingPuzzlePieces = Array.from(
+    $slidingPuzzle.querySelectorAll('.sliding-puzzle__piece')
+  )
+  let index = 0
+  for (let row = 0; row < height; row++) {
+    for (let column = 0; column < width; column++) {
+      const value = slidingPuzzle[positionToIndex({ row, column })]
+      if (value !== null) {
+        const $slidingPuzzlePiece = slidingPuzzlePieces[index]
+        $slidingPuzzlePiece.style.backgroundImage = `url('${imagePath}')`
+        $slidingPuzzlePiece.style.backgroundSize = `${scaledWidth}px ${scaledHeight}px`
+        $slidingPuzzlePiece.style.backgroundPosition = `right ${
+          (width - column - 1) * -slidingPuzzlePieceWidth
+        }px top ${row * -slidingPuzzlePieceHeight}px`
+        index++
+      }
+    }
+  }
 }
 
 async function loadImage(url) {
@@ -227,29 +266,47 @@ async function main() {
     }
   }
 
-  async function animatedShuffle() {
-    const numberOfShuffles = 100
-    for (
-      let shuffleNumber = 1;
-      shuffleNumber <= numberOfShuffles;
-      shuffleNumber++
-    ) {
-      slidingPuzzle = shuffle(slidingPuzzle)
-      updatePositions()
-      await wait(1)
-    }
-  }
-
-  updatePositions()
   document.body.appendChild($slidingPuzzle)
-  // await animatedShuffle()
+
   const numberOfShuffles = 1000
-  const { slidingPuzzle: shuffledSlidingPuzzle, solution } = shuffleTimes(
+  const { slidingPuzzle: shuffledSlidingPuzzle } = shuffleTimes(
     slidingPuzzle,
     numberOfShuffles
   )
   slidingPuzzle = shuffledSlidingPuzzle
   updatePositions()
+
+  let currentImageIndex = 0
+  let maxImageIndex = 3
+  let currentImagePath = `images/${currentImageIndex + 1}.jpg`
+
+  const $nextButton = document.createElement('button')
+  $nextButton.textContent = 'Next'
+  $nextButton.classList.add('next-button')
+  $nextButton.style.display = 'none'
+  $nextButton.style.transform = `translate(0, ${
+    0.5 * parseInt($slidingPuzzle.style.height, 10) + 0.5 * 21 + 8
+  }px)`
+  $nextButton.addEventListener('click', async function () {
+    $nextButton.style.display = 'none'
+
+    $slidingPuzzle.classList.remove('sliding-puzzle--solved')
+    $slidingPuzzle.style.backgroundImage = ''
+
+    currentImageIndex = (currentImageIndex + 1) % (maxImageIndex + 1)
+    currentImagePath = `images/${currentImageIndex + 1}.jpg`
+
+    slidingPuzzle = createSlidingPuzzle()
+    await changeImage(slidingPuzzle, $slidingPuzzle, currentImagePath)
+
+    const { slidingPuzzle: shuffledSlidingPuzzle } = shuffleTimes(
+      slidingPuzzle,
+      numberOfShuffles
+    )
+    slidingPuzzle = shuffledSlidingPuzzle
+    updatePositions()
+  })
+  document.body.appendChild($nextButton)
 
   let zIndex = 1
   /*
@@ -400,12 +457,26 @@ async function main() {
       $movingSlidingPuzzlePiece = null
 
       if (isSolved(slidingPuzzle)) {
-        $slidingPuzzle.classList.add('sliding-puzzle--solved')
+        updateForWhenItsSolved()
       } else {
         $slidingPuzzle.classList.remove('sliding-puzzle--solved')
       }
     }
   })
+
+  function solve() {
+    slidingPuzzle = [null, 1, 2, 3, 4, 5, 6, 7, 8]
+    updatePositions()
+    updateForWhenItsSolved()
+  }
+
+  // window.solve = solve
+
+  function updateForWhenItsSolved() {
+    $slidingPuzzle.classList.add('sliding-puzzle--solved')
+    $slidingPuzzle.style.backgroundImage = `url('${currentImagePath}')`
+    $nextButton.style.display = 'inline-block'
+  }
 
   async function doMoves(moves) {
     for (const move of moves) {
